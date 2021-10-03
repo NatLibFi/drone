@@ -1,8 +1,201 @@
 # Changelog
+
+## [v2.4.0](https://github.com/drone/drone/tree/v2.4.0) (2021-09-23)
+
+[Full Changelog](https://github.com/drone/drone/compare/v2.3.1...v2.4.0)
+
+**Implemented enhancements:**
+
+- bump ui version to v2.3.0 [\#3146](https://github.com/drone/drone/pull/3146) ([d1wilko](https://github.com/d1wilko))
+- verify if the application is buildable [\#3144](https://github.com/drone/drone/pull/3144) ([marko-gacesa](https://github.com/marko-gacesa))
+
+**Fixed bugs:**
+
+- fixes build issue with bitbucket cloud [\#3147](https://github.com/drone/drone/pull/3147) ([eoinmcafee00](https://github.com/eoinmcafee00))
+- Fix stepLimit param in Starlark and Template OSS code [\#3141](https://github.com/drone/drone/pull/3141) ([phil-davis](https://github.com/phil-davis))
+- fix a broken link in readme [\#3140](https://github.com/drone/drone/pull/3140) ([empire](https://github.com/empire))
+
+**Merged pull requests:**
+
+- Allow jsonnet imports in pipeline configuration [\#3105](https://github.com/drone/drone/pull/3105) ([hhamalai](https://github.com/hhamalai))
+
+## [v2.3.1](https://github.com/drone/drone/tree/v2.3.1) (2021-09-09)
+
+[Full Changelog](https://github.com/drone/drone/compare/v2.3.0...v2.3.1)
+
+**Implemented enhancements:**
+
+- bump ui to v2.2.1 - https://github.com/drone/drone-ui/blob/main/CHANGELOG.md [\#3138](https://github.com/drone/drone/pull/3138) ([d1wilko](https://github.com/d1wilko))
+
+**Merged pull requests:**
+
+- \(maint\)-release 2.3.1 [\#3139](https://github.com/drone/drone/pull/3139) ([d1wilko](https://github.com/d1wilko))
+
+## [v2.3.0](https://github.com/drone/drone/tree/v2.3.0) (2021-09-09)
+
+[Full Changelog](https://github.com/drone/drone/compare/v2.2.0...v2.3.0)
+
+**Implemented enhancements:**
+
+- bump ui to v2.2.0 - https://github.com/drone/drone-ui/blob/main/CHANGELOG.md [\#3137](https://github.com/drone/drone/pull/3137) ([d1wilko](https://github.com/d1wilko))
+- Make starlark step limit configurable [\#3134](https://github.com/drone/drone/pull/3134) ([phil-davis](https://github.com/phil-davis))
+- \(feat\) drone h/a: wrapped scheduler's signal func with redis mutex [\#3130](https://github.com/drone/drone/pull/3130) ([marko-gacesa](https://github.com/marko-gacesa))
+
+**Fixed bugs:**
+
+- \(fix\) trim http/s prefixes from config hostnames [\#3136](https://github.com/drone/drone/pull/3136) ([tphoney](https://github.com/tphoney))
+- \(fix\) remove unused jwt-go library [\#3129](https://github.com/drone/drone/pull/3129) ([tphoney](https://github.com/tphoney))
+
+## [v2.2.0](https://github.com/drone/drone/tree/v2.2.0) (2021-09-01)
+
+[Full Changelog](https://github.com/drone/drone/compare/v2.1.0...v2.2.0)
+
+**Implemented enhancements:**
+
+- \(maint\) ui version v2.1.0 - https://github.com/drone/drone-ui/blob/main/CHANGELOG.md [\#3132](https://github.com/drone/drone/pull/3132) ([d1wilko](https://github.com/d1wilko))
+- Ability to cancel running builds, if a new commit is pushed [\#3126](https://github.com/drone/drone/pull/3126) ([eoinmcafee00](https://github.com/eoinmcafee00))
+
+**Fixed bugs:**
+
+- fix templating reg expression to match if .drone.yml contains --- characters  [\#3131](https://github.com/drone/drone/pull/3131) ([eoinmcafee00](https://github.com/eoinmcafee00))
+- add check on template extension type - throw error if invalid [\#3128](https://github.com/drone/drone/pull/3128) ([eoinmcafee00](https://github.com/eoinmcafee00))
+
+**Merged pull requests:**
+
+- \(maint\)-release 2.2.0 [\#3133](https://github.com/drone/drone/pull/3133) ([eoinmcafee00](https://github.com/eoinmcafee00))
+- Rename files with camelCase name to use snake\_case convention [\#3127](https://github.com/drone/drone/pull/3127) ([marko-gacesa](https://github.com/marko-gacesa))
+- event-stream supports timeout [\#3125](https://github.com/drone/drone/pull/3125) ([zc2638](https://github.com/zc2638))
+- \(maint\) Readme update Add Contributor Section  [\#3111](https://github.com/drone/drone/pull/3111) ([mrsantons](https://github.com/mrsantons))
+
+## [v2.1.0](https://github.com/drone/drone/tree/v2.1.0) (2021-08-24)
+
+[Full Changelog](https://github.com/drone/drone/compare/v2.0.6...v2.1.0)
+
+**Implemented enhancements:**
+
+- \(maint\) ui version v2.0.1. - https://github.com/drone/drone-ui/blob/main/CHANGELOG.md [\#3123](https://github.com/drone/drone/pull/3123) ([d1wilko](https://github.com/d1wilko))
+- add support for yaml templates [\#3120](https://github.com/drone/drone/pull/3120) ([eoinmcafee00](https://github.com/eoinmcafee00))
+
+**Fixed bugs:**
+
+- Update error message to forbidden if user membership doesn't exist on repo [\#3122](https://github.com/drone/drone/pull/3122) ([eoinmcafee00](https://github.com/eoinmcafee00))
+- update create template path to have namespace, instead of inside the payload [\#3121](https://github.com/drone/drone/pull/3121) ([eoinmcafee00](https://github.com/eoinmcafee00))
+- update dependency drone/go-scm to 1.15.2 to fix gitea build problem [\#3118](https://github.com/drone/drone/pull/3118) ([sesky4](https://github.com/sesky4))
+
+**Merged pull requests:**
+
+- \(maint\) v2.1.0 release prep [\#3124](https://github.com/drone/drone/pull/3124) ([d1wilko](https://github.com/d1wilko))
+
+## [v2.0.6](https://github.com/drone/drone/tree/v2.0.6) (2021-08-17)
+
+[Full Changelog](https://github.com/drone/drone/compare/v2.0.5...v2.0.6)
+
+**Merged pull requests:**
+
+- \(maint\) v2.0.6 release prep [\#3119](https://github.com/drone/drone/pull/3119) ([tphoney](https://github.com/tphoney))
+
+## [v2.0.5](https://github.com/drone/drone/tree/v2.0.5) (2021-08-17)
+
+[Full Changelog](https://github.com/drone/drone/compare/v2.0.4...v2.0.5)
+
+**Implemented enhancements:**
+
+- bump ui version [\#3115](https://github.com/drone/drone/pull/3115) ([d1wilko](https://github.com/d1wilko))
+- bump ui version [\#3114](https://github.com/drone/drone/pull/3114) ([d1wilko](https://github.com/d1wilko))
+- Add support for nested data objects within templates [\#3110](https://github.com/drone/drone/pull/3110) ([eoinmcafee00](https://github.com/eoinmcafee00))
+- \(feat\) redis implementation for pub-sub, log streaming and canceller [\#3108](https://github.com/drone/drone/pull/3108) ([marko-gacesa](https://github.com/marko-gacesa))
+
+**Fixed bugs:**
+
+- fix issue where map changes order therefore test randomly fails [\#3112](https://github.com/drone/drone/pull/3112) ([eoinmcafee00](https://github.com/eoinmcafee00))
+
+**Merged pull requests:**
+
+- release 2.0.5 [\#3117](https://github.com/drone/drone/pull/3117) ([eoinmcafee00](https://github.com/eoinmcafee00))
+- Update pull\_request\_template.md [\#3107](https://github.com/drone/drone/pull/3107) ([tphoney](https://github.com/tphoney))
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## Unreleased
+
+## [2.0.4]
+### Fixed
+- DRON-97 remove use of request animation frame to prevent high CPU on tab refocus events.
+
+## [2.0.3]
+### Fixed
+- DONE-91 handle extra slashes in url. [#3009](https://github.com/drone/drone/pull/3099).
+
+## [2.0.2]
+### Added
+- Merge remote-tracking branch 'origin/master'
+- prevent repository list short circuit in UI
+- remove deprecated steps from building file [#3097](https://github.com/drone/drone/pull/3097)
+- adding depends_on, image and detached fields to step [#3072](https://github.com/drone/drone/pull/3072)
+- Add ctx.build.debug boolean [#3082](https://github.com/drone/drone/pull/3082)
+- Bump github.com/google/go-jsonnet to v0.17.0 [#3084](https://github.com/drone/drone/pull/3084)
+- bump go-scm v1.15.1 [#3096](https://github.com/drone/drone/pull/3096)
+- bitbucket server build issue [#3092](https://github.com/drone/drone/pull/3092)
+- update scm version [#3091](https://github.com/drone/drone/pull/3091)  
+- Limit graceful shutdown duration [#3093](https://github.com/drone/drone/pull/3093)  
+- bump user interface  
+- bump ui version
+- ignore skip directive for promote and rollback events
+- new feature: maximum open DB connections is configurable[#3089](https://github.com/drone/drone/pull/3089) 
+- jsonnet additional parameters [#3087](https://github.com/drone/drone/pull/3087)
+- hide login button if user already authenticated  
+- new feature: configuration templates [#3081](https://github.com/drone/drone/pull/3081)
+
+### Fixed
+- various typos [#3088](https://github.com/drone/drone/pull/3088)
+- handle error properly if template doesn't exist [#3095](https://github.com/drone/drone/pull/3093)
+- oss build issue [#3086](https://github.com/drone/drone/pull/3086)
+- graceful shutdown [#3083](https://github.com/drone/drone/pull/3083)
+
+## [2.0.1]
+### Added
+- support for configuring the internal yaml cache size.
+
+## [2.0.0]
+### Added
+- feature flags for mixed-mode database encryption.
+
+### Changed
+- user-interface re-design
+
+### Breaking
+- removed deprecated kubernetes integration in favor of official kubernetes runner.
+- removed deprecated nomad integration in favor of official nomad runner.
+
+## [1.10.1]
+### Added
+- support for repository-level concurrency limits.
+- support for gitlab and github internal visibility on initial sync.
+
+### Fixed
+- create machine user with a custom API token.
+
+## [1.10.0]
+### Added
+- support for starlark scripts in core.
+- support for executing pipelines in debug mode.
+
+## [1.9.2]
+### Added
+- update go-scm dependency to fix
+
+## [1.9.1]
+### Added
+- support for increasing the http request timeout for extensions. [#2998](https://github.com/drone/drone/pull/2998).
+- support for skipping a pipeline if the validation extension returns an ErrSkip.
+- support for blocking a pipeline if the validation extension returns an ErrBlock.
+
+### Fixed
+- rollback endpoint should be available to users with write permission.
+- retrying a build should re-use custom build parameters from parent build.
 
 ## [1.9.0] - 2020-07-12
 ### Added
@@ -50,13 +243,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - page to view the latest build per branch.
 
 ### Fixed
-- sync routine not executing asyncronously, being cancelled by http context.
+- sync routine not executing asynchronously, being cancelled by http context.
 - sync routine should ignore gitlab subrepositories
 - convert deploy events in 0.8 yaml to promote events.
 - do not execute cron job for disabled repositories. [#2931](https://github.com/drone/drone/issues/2931).
 - remove trailing slash from gitea url to prevent oauth2 token refresh errors, by [@cmj0121](https://github.com/cmj0121). [#2920](https://github.com/drone/drone/issues/2920). 
 - disable font ligatures in build log output. [drone/drone-ui#322](https://github.com/drone/drone-ui/pull/322).
-- missing am/pm in timstamps
+- missing am/pm in timestamps
 
 ## [1.6.5] - 2020-01-29
 ### Changed
@@ -246,3 +439,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - update go-scm to version 1.3.0, by [@bradrydzewski](https://github.com/bradrydzewski).
 - update drone-runtime to version to 1.0.4, by [@bradrydzewski](https://github.com/bradrydzewski).
 - ping docker daemon before agent starts to ensure connectivity, by [@bradrydzewski](https://github.com/bradrydzewski).
+
+
+\* *This Changelog was automatically generated by [github_changelog_generator](https://github.com/github-changelog-generator/github-changelog-generator)*

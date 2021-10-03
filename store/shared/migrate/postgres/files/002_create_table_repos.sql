@@ -45,3 +45,11 @@ ALTER TABLE repos ADD COLUMN repo_cancel_pulls BOOLEAN NOT NULL DEFAULT false;
 -- name: alter-table-repos-add-column-cancel-push
 
 ALTER TABLE repos ADD COLUMN repo_cancel_push BOOLEAN NOT NULL DEFAULT false;
+
+-- name: alter-table-repos-add-column-throttle
+
+ALTER TABLE repos ADD COLUMN repo_throttle INTEGER NOT NULL DEFAULT 0;
+
+-- name: alter-table-repos-add-column-cancel-running
+
+ALTER TABLE repos ADD COLUMN repo_cancel_running BOOLEAN NOT NULL DEFAULT false;

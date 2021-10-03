@@ -4,46 +4,12 @@ version: '2'
 
 tasks:
   install:
-    cmds:
-    - task: install-server
-    - task: install-agent
-    - task: install-controller
-  
-  install-server:
     dir: cmd/drone-server
     cmds: [ go install -v ]
     env:
       GO111MODULE: on
 
-  install-agent:
-    dir: cmd/drone-agent
-    cmds: [ go install ]
-    env:
-      GO111MODULE: 'on'
-
-  install-controller:
-    dir: cmd/drone-controller
-    cmds: [ go install ]
-    env:
-      GO111MODULE: on
-
   build:
-    cmds:
-    - task: build-agent
-    - task: build-server
-    - task: build-controller
-
-  build-agent:
-    cmds:
-    - task: build-base
-      vars: { name: agent }
-
-  build-controller:
-    cmds:
-    - task: build-base
-      vars: { name: controller }
-
-  build-server:
     cmds:
     - task: build-base
       vars: { name: server }
@@ -64,22 +30,6 @@ tasks:
     - rm -rf release
 
   docker:
-    cmds:
-    - task: docker-controller
-    - task: docker-agent
-    - task: docker-server
-
-  docker-agent:
-    cmds:
-    - task: docker-base
-      vars: { name: agent, image: drone/agent }
-
-  docker-controller:
-    cmds:
-    - task: docker-base
-      vars: { name: controller, image: drone/controller }
-
-  docker-server:
     cmds:
     - task: docker-base
       vars: { name: server, image: drone/drone }
@@ -129,6 +79,7 @@ tasks:
       - cmd: go test -count=1 github.com/drone/drone/store/batch
       - cmd: go test -count=1 github.com/drone/drone/store/batch2
       - cmd: go test -count=1 github.com/drone/drone/store/build
+      - cmd: go test -count=1 github.com/drone/drone/store/card
       - cmd: go test -count=1 github.com/drone/drone/store/cron
       - cmd: go test -count=1 github.com/drone/drone/store/logs
       - cmd: go test -count=1 github.com/drone/drone/store/perm
@@ -137,6 +88,7 @@ tasks:
       - cmd: go test -count=1 github.com/drone/drone/store/secret/global
       - cmd: go test -count=1 github.com/drone/drone/store/stage
       - cmd: go test -count=1 github.com/drone/drone/store/step
+      - cmd: go test -count=1 github.com/drone/drone/store/template
       - cmd: go test -count=1 github.com/drone/drone/store/user
       - cmd: docker kill mysql
 
@@ -162,6 +114,7 @@ tasks:
       - cmd: go test -count=1 github.com/drone/drone/store/batch
       - cmd: go test -count=1 github.com/drone/drone/store/batch2
       - cmd: go test -count=1 github.com/drone/drone/store/build
+      - cmd: go test -count=1 github.com/drone/drone/store/card
       - cmd: go test -count=1 github.com/drone/drone/store/cron
       - cmd: go test -count=1 github.com/drone/drone/store/logs
       - cmd: go test -count=1 github.com/drone/drone/store/perm
@@ -170,6 +123,7 @@ tasks:
       - cmd: go test -count=1 github.com/drone/drone/store/secret/global
       - cmd: go test -count=1 github.com/drone/drone/store/stage
       - cmd: go test -count=1 github.com/drone/drone/store/step
+      - cmd: go test -count=1 github.com/drone/drone/store/template
       - cmd: go test -count=1 github.com/drone/drone/store/user
       - cmd: docker kill postgres
         silent: true

@@ -229,6 +229,7 @@ SELECT
 ,stage_errignore
 ,stage_exit_code
 ,stage_limit
+,stage_limit_repo
 ,stage_os
 ,stage_arch
 ,stage_variant
@@ -296,6 +297,7 @@ SELECT
 ,stage_errignore
 ,stage_exit_code
 ,stage_limit
+,stage_limit_repo
 ,stage_os
 ,stage_arch
 ,stage_variant
@@ -321,6 +323,9 @@ SELECT
 ,step_started
 ,step_stopped
 ,step_version
+,step_depends_on
+,step_image
+,step_detached
 FROM stages
   LEFT JOIN steps
 	ON stages.stage_id=steps.step_stage_id
@@ -368,6 +373,7 @@ INSERT INTO stages (
 ,stage_errignore
 ,stage_exit_code
 ,stage_limit
+,stage_limit_repo
 ,stage_os
 ,stage_arch
 ,stage_variant
@@ -394,6 +400,7 @@ INSERT INTO stages (
 ,:stage_errignore
 ,:stage_exit_code
 ,:stage_limit
+,:stage_limit_repo
 ,:stage_os
 ,:stage_arch
 ,:stage_variant
@@ -427,6 +434,9 @@ INSERT INTO steps (
 ,step_started
 ,step_stopped
 ,step_version
+,step_depends_on
+,step_image
+,step_detached
 ) VALUES (
  :step_stage_id
 ,:step_number
@@ -438,5 +448,8 @@ INSERT INTO steps (
 ,:step_started
 ,:step_stopped
 ,:step_version
+,:step_depends_on
+,:step_image
+,:step_detached
 )
 `

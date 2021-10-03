@@ -16,12 +16,8 @@
 
 package converter
 
-import (
-	"github.com/drone/drone/core"
-)
+import "github.com/drone/drone/core"
 
-// Starlark returns a conversion service that converts the
-// starlark file to a yaml file.
-func Starlark(enabled bool) core.ConvertService {
+func Starlark(enabled bool, stepLimit uint64) core.ConvertService {
 	return new(noop)
 }

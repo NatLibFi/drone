@@ -120,15 +120,6 @@ func provideRepositoryService(client *scm.Client, renewer core.Renewer, config c
 // provideSession is a Wire provider function that returns a
 // user session based on the environment configuration.
 func provideSession(store core.UserStore, config config.Config) (core.Session, error) {
-	if config.Session.MappingFile != "" {
-		return session.Legacy(store, session.Config{
-			Secure:      config.Session.Secure,
-			Secret:      config.Session.Secret,
-			Timeout:     config.Session.Timeout,
-			MappingFile: config.Session.MappingFile,
-		})
-	}
-
 	return session.New(store, session.NewConfig(
 		config.Session.Secret,
 		config.Session.Timeout,
@@ -209,21 +200,19 @@ func provideDatadog(
 		builds,
 		*system,
 		sink.Config{
-			Endpoint:         config.Datadog.Endpoint,
-			Token:            config.Datadog.Token,
-			License:          license.Kind,
-			Licensor:         license.Licensor,
-			Subscription:     license.Subscription,
-			EnableGithub:     config.IsGitHub(),
-			EnableGithubEnt:  config.IsGitHubEnterprise(),
-			EnableGitlab:     config.IsGitLab(),
-			EnableBitbucket:  config.IsBitbucket(),
-			EnableStash:      config.IsStash(),
-			EnableGogs:       config.IsGogs(),
-			EnableGitea:      config.IsGitea(),
-			EnableAgents:     !config.Agent.Disabled,
-			EnableNomad:      config.Nomad.Enabled,
-			EnableKubernetes: config.Kube.Enabled,
+			Endpoint:        config.Datadog.Endpoint,
+			Token:           config.Datadog.Token,
+			License:         license.Kind,
+			Licensor:        license.Licensor,
+			Subscription:    license.Subscription,
+			EnableGithub:    config.IsGitHub(),
+			EnableGithubEnt: config.IsGitHubEnterprise(),
+			EnableGitlab:    config.IsGitLab(),
+			EnableBitbucket: config.IsBitbucket(),
+			EnableStash:     config.IsStash(),
+			EnableGogs:      config.IsGogs(),
+			EnableGitea:     config.IsGitea(),
+			EnableAgents:    !config.Agent.Disabled,
 		},
 	)
 }

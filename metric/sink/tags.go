@@ -16,7 +16,9 @@ package sink
 
 import (
 	"fmt"
+	"time"
 
+	"github.com/drone/drone/core"
 	"github.com/drone/drone/version"
 )
 
@@ -47,10 +49,6 @@ func createTags(config Config) []string {
 	switch {
 	case config.EnableAgents:
 		tags = append(tags, "scheduler:internal:agents")
-	case config.EnableKubernetes:
-		tags = append(tags, "scheduler:kubernetes")
-	case config.EnableNomad:
-		tags = append(tags, "scheduler:nomad")
 	default:
 		tags = append(tags, "scheduler:internal:local")
 	}
@@ -71,6 +69,23 @@ func createTags(config Config) []string {
 	} else {
 		tag := fmt.Sprintf("license:%s", config.License)
 		tags = append(tags, tag)
+	}
+	return tags
+}
+
+func createInstallerTags(users []*core.User) []string {
+	var tags []string
+	for _, user := range users {
+		if user.Machine {
+			continue
+		}
+		if len(user.Email) == 0 {
+			continue
+		}
+		tag1 := fmt.Sprintf("installer:%s", user.Email)
+		tag2 := fmt.Sprintf("installed:%s", time.Unix(user.Created, 0).UTC().Format(time.RFC3339Nano))
+		tags = append(tags, tag1, tag2)
+		break
 	}
 	return tags
 }

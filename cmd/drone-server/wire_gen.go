@@ -20,11 +20,13 @@ import (
 	"github.com/drone/drone/service/token"
 	"github.com/drone/drone/service/transfer"
 	"github.com/drone/drone/service/user"
+	"github.com/drone/drone/store/card"
 	"github.com/drone/drone/store/cron"
 	"github.com/drone/drone/store/perm"
 	"github.com/drone/drone/store/secret"
 	"github.com/drone/drone/store/secret/global"
 	"github.com/drone/drone/store/step"
+	"github.com/drone/drone/store/template"
 	"github.com/drone/drone/trigger"
 	cron2 "github.com/drone/drone/trigger/cron"
 )
@@ -44,15 +46,23 @@ func InitializeApplication(config2 config.Config) (application, error) {
 	if err != nil {
 		return application{}, err
 	}
-	userStore := provideUserStore(db)
+	encrypter, err := provideEncrypter(config2)
+	if err != nil {
+		return application{}, err
+	}
+	userStore := provideUserStore(db, encrypter, config2)
 	renewer := token.Renewer(refresher, userStore)
 	commitService := commit.New(client, renewer)
 	cronStore := cron.New(db)
 	repositoryStore := provideRepoStore(db)
 	buildStore := provideBuildStore(db)
-	corePubsub := pubsub.New()
+	redisDB, err := provideRedisClient(config2)
+	if err != nil {
+		return application{}, err
+	}
+	corePubsub := pubsub.New(redisDB)
 	stageStore := provideStageStore(db)
-	scheduler := provideScheduler(stageStore, config2)
+	scheduler := provideScheduler(stageStore, redisDB)
 	statusService := provideStatusService(client, renewer, config2)
 	stepStore := step.New(db)
 	system := provideSystem(config2)
@@ -60,7 +70,8 @@ func InitializeApplication(config2 config.Config) (application, error) {
 	coreCanceler := canceler.New(buildStore, corePubsub, repositoryStore, scheduler, stageStore, statusService, stepStore, userStore, webhookSender)
 	fileService := provideContentService(client, renewer)
 	configService := provideConfigPlugin(client, fileService, config2)
-	convertService := provideConvertPlugin(client, config2)
+	templateStore := template.New(db)
+	convertService := provideConvertPlugin(client, fileService, config2, templateStore)
 	validateService := provideValidatePlugin(config2)
 	triggerer := trigger.New(coreCanceler, configService, convertService, commitService, statusService, buildStore, scheduler, repositoryStore, userStore, validateService, webhookSender)
 	cronScheduler := cron2.New(commitService, cronStore, repositoryStore, userStore, triggerer)
@@ -68,18 +79,15 @@ func InitializeApplication(config2 config.Config) (application, error) {
 	coreLicense := provideLicense(client, config2)
 	datadog := provideDatadog(userStore, repositoryStore, buildStore, system, coreLicense, config2)
 	logStore := provideLogStore(db, config2)
-	logStream := livelog.New()
+	logStream := livelog.New(redisDB)
 	netrcService := provideNetrcService(client, renewer, config2)
-	encrypter, err := provideEncrypter(config2)
-	if err != nil {
-		return application{}, err
-	}
 	secretStore := secret.New(db, encrypter)
 	globalSecretStore := global.New(db, encrypter)
 	buildManager := manager.New(buildStore, configService, convertService, corePubsub, logStore, logStream, netrcService, repositoryStore, scheduler, secretStore, globalSecretStore, statusService, stageStore, stepStore, system, userStore, webhookSender)
 	secretService := provideSecretPlugin(config2)
 	registryService := provideRegistryPlugin(config2)
 	runner := provideRunner(buildManager, secretService, registryService, config2)
+	cardStore := card.New(db)
 	hookService := provideHookService(client, renewer, config2)
 	licenseService := license.NewService(userStore, repositoryStore, buildStore, coreLicense)
 	organizationService := provideOrgService(client, renewer)
@@ -93,7 +101,7 @@ func InitializeApplication(config2 config.Config) (application, error) {
 	syncer := provideSyncer(repositoryService, repositoryStore, userStore, batcher, config2)
 	transferer := transfer.New(repositoryStore, permStore)
 	userService := user.New(client, renewer)
-	server := api.New(buildStore, commitService, cronStore, corePubsub, globalSecretStore, hookService, logStore, coreLicense, licenseService, organizationService, permStore, repositoryStore, repositoryService, scheduler, secretStore, stageStore, stepStore, statusService, session, logStream, syncer, system, transferer, triggerer, userStore, userService, webhookSender)
+	server := api.New(buildStore, commitService, cardStore, cronStore, corePubsub, globalSecretStore, hookService, logStore, coreLicense, licenseService, organizationService, permStore, repositoryStore, repositoryService, scheduler, secretStore, stageStore, stepStore, statusService, session, logStream, syncer, system, templateStore, transferer, triggerer, userStore, userService, webhookSender)
 	admissionService := provideAdmissionPlugin(client, organizationService, userService, config2)
 	hookParser := parser.New(client)
 	coreLinker := linker.New(client)

@@ -40,6 +40,7 @@ func toParams(stage *core.Stage) map[string]interface{} {
 		"stage_errignore":  stage.ErrIgnore,
 		"stage_exit_code":  stage.ExitCode,
 		"stage_limit":      stage.Limit,
+		"stage_limit_repo": stage.LimitRepo,
 		"stage_os":         stage.OS,
 		"stage_arch":       stage.Arch,
 		"stage_variant":    stage.Variant,
@@ -85,6 +86,7 @@ func scanRow(scanner db.Scanner, dest *core.Stage) error {
 		&dest.ErrIgnore,
 		&dest.ExitCode,
 		&dest.Limit,
+		&dest.LimitRepo,
 		&dest.OS,
 		&dest.Arch,
 		&dest.Variant,
@@ -110,6 +112,7 @@ func scanRow(scanner db.Scanner, dest *core.Stage) error {
 func scanRowStep(scanner db.Scanner, stage *core.Stage, step *nullStep) error {
 	depJSON := types.JSONText{}
 	labJSON := types.JSONText{}
+	stepDepJSON := types.JSONText{}
 	err := scanner.Scan(
 		&stage.ID,
 		&stage.RepoID,
@@ -123,6 +126,7 @@ func scanRowStep(scanner db.Scanner, stage *core.Stage, step *nullStep) error {
 		&stage.ErrIgnore,
 		&stage.ExitCode,
 		&stage.Limit,
+		&stage.LimitRepo,
 		&stage.OS,
 		&stage.Arch,
 		&stage.Variant,
@@ -148,9 +152,13 @@ func scanRowStep(scanner db.Scanner, stage *core.Stage, step *nullStep) error {
 		&step.Started,
 		&step.Stopped,
 		&step.Version,
+		&stepDepJSON,
+		&step.Image,
+		&step.Detached,
 	)
 	json.Unmarshal(depJSON, &stage.DependsOn)
 	json.Unmarshal(labJSON, &stage.Labels)
+	json.Unmarshal(stepDepJSON, &step.DependsOn)
 	return err
 }
 

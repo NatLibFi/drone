@@ -33,6 +33,14 @@ var migrations = []struct {
 		stmt: alterTableReposAddColumnCancelPush,
 	},
 	{
+		name: "alter-table-repos-add-column-throttle",
+		stmt: alterTableReposAddColumnThrottle,
+	},
+	{
+		name: "alter-table-repos-add-column-cancel-running",
+		stmt: alterTableReposAddColumnCancelRunning,
+	},
+	{
 		name: "create-table-perms",
 		stmt: createTablePerms,
 	},
@@ -65,6 +73,10 @@ var migrations = []struct {
 		stmt: createIndexBuildsRef,
 	},
 	{
+		name: "alter-table-builds-add-column-debug",
+		stmt: alterTableBuildsAddColumnDebug,
+	},
+	{
 		name: "create-table-stages",
 		stmt: createTableStages,
 	},
@@ -83,6 +95,10 @@ var migrations = []struct {
 	{
 		name: "create-trigger-stage-update",
 		stmt: createTriggerStageUpdate,
+	},
+	{
+		name: "alter-table-stages-add-column-limit-repos",
+		stmt: alterTableStagesAddColumnLimitRepos,
 	},
 	{
 		name: "create-table-steps",
@@ -143,6 +159,34 @@ var migrations = []struct {
 	{
 		name: "create-index-latest-repo",
 		stmt: createIndexLatestRepo,
+	},
+	{
+		name: "create-table-template",
+		stmt: createTableTemplate,
+	},
+	{
+		name: "create-index-template-namespace",
+		stmt: createIndexTemplateNamespace,
+	},
+	{
+		name: "alter-table-steps-add-column-step-depends-on",
+		stmt: alterTableStepsAddColumnStepDependsOn,
+	},
+	{
+		name: "alter-table-steps-add-column-step-image",
+		stmt: alterTableStepsAddColumnStepImage,
+	},
+	{
+		name: "alter-table-steps-add-column-step-detached",
+		stmt: alterTableStepsAddColumnStepDetached,
+	},
+	{
+		name: "create-table-cards",
+		stmt: createTableCards,
+	},
+	{
+		name: "create-index-cards-card_build",
+		stmt: createIndexCardsCardbuild,
 	},
 }
 
@@ -237,8 +281,8 @@ CREATE TABLE IF NOT EXISTS users (
 ,user_created       INTEGER
 ,user_updated       INTEGER
 ,user_last_login    INTEGER
-,user_oauth_token   VARCHAR(500)
-,user_oauth_refresh VARCHAR(500)
+,user_oauth_token   BLOB
+,user_oauth_refresh BLOB
 ,user_oauth_expiry  INTEGER
 ,user_hash          VARCHAR(500)
 ,UNIQUE(user_login)
@@ -296,6 +340,14 @@ ALTER TABLE repos ADD COLUMN repo_cancel_pulls BOOLEAN NOT NULL DEFAULT false;
 
 var alterTableReposAddColumnCancelPush = `
 ALTER TABLE repos ADD COLUMN repo_cancel_push BOOLEAN NOT NULL DEFAULT false;
+`
+
+var alterTableReposAddColumnThrottle = `
+ALTER TABLE repos ADD COLUMN repo_throttle INTEGER NOT NULL DEFAULT 0;
+`
+
+var alterTableReposAddColumnCancelRunning = `
+ALTER TABLE repos ADD COLUMN repo_cancel_running BOOLEAN NOT NULL DEFAULT false;
 `
 
 //
@@ -382,6 +434,10 @@ var createIndexBuildsRef = `
 CREATE INDEX ix_build_ref ON builds (build_repo_id, build_ref);
 `
 
+var alterTableBuildsAddColumnDebug = `
+ALTER TABLE builds ADD COLUMN build_debug BOOLEAN NOT NULL DEFAULT false;
+`
+
 //
 // 005_create_table_stages.sql
 //
@@ -448,6 +504,10 @@ BEGIN
     DELETE FROM stages_unfinished WHERE stage_id = OLD.stage_id;
   END IF;
 END;
+`
+
+var alterTableStagesAddColumnLimitRepos = `
+ALTER TABLE stages ADD COLUMN stage_limit_repo INTEGER NOT NULL DEFAULT 0;
 `
 
 //
@@ -633,4 +693,59 @@ CREATE TABLE IF NOT EXISTS latest (
 
 var createIndexLatestRepo = `
 CREATE INDEX ix_latest_repo ON latest (latest_repo_id);
+`
+
+//
+// 015_create_table_templates.sql
+//
+
+var createTableTemplate = `
+CREATE TABLE IF NOT EXISTS templates (
+     template_id      INTEGER PRIMARY KEY AUTO_INCREMENT
+    ,template_name    VARCHAR(500)
+    ,template_namespace VARCHAR(50)
+    ,template_data    BLOB
+    ,template_created INTEGER
+    ,template_updated INTEGER
+    ,UNIQUE(template_name, template_namespace)
+    );
+`
+
+var createIndexTemplateNamespace = `
+CREATE INDEX ix_template_namespace ON templates (template_namespace);
+`
+
+//
+// 016_add_columns_steps.sql
+//
+
+var alterTableStepsAddColumnStepDependsOn = `
+ALTER TABLE steps ADD COLUMN step_depends_on TEXT NULL;
+`
+
+var alterTableStepsAddColumnStepImage = `
+ALTER TABLE steps ADD COLUMN step_image VARCHAR(1000) NOT NULL DEFAULT '';
+`
+
+var alterTableStepsAddColumnStepDetached = `
+ALTER TABLE steps ADD COLUMN step_detached BOOLEAN NOT NULL DEFAULT FALSE;
+`
+
+//
+// 017_create_table_cards.sql
+//
+
+var createTableCards = `
+CREATE TABLE IF NOT EXISTS cards (
+     card_id         INTEGER PRIMARY KEY AUTO_INCREMENT
+    ,card_build      INTEGER
+    ,card_stage      INTEGER
+    ,card_step       INTEGER
+    ,card_schema     TEXT
+    ,card_data       TEXT
+);
+`
+
+var createIndexCardsCardbuild = `
+CREATE INDEX ix_cards_build ON cards (card_build);
 `

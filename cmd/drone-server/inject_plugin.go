@@ -61,10 +61,13 @@ func provideAdmissionPlugin(client *scm.Client, orgs core.OrganizationService, u
 // configuration.
 func provideConfigPlugin(client *scm.Client, contents core.FileService, conf spec.Config) core.ConfigService {
 	return config.Combine(
-		config.Global(
-			conf.Yaml.Endpoint,
-			conf.Yaml.Secret,
-			conf.Yaml.SkipVerify,
+		config.Memoize(
+			config.Global(
+				conf.Yaml.Endpoint,
+				conf.Yaml.Secret,
+				conf.Yaml.SkipVerify,
+				conf.Yaml.Timeout,
+			),
 		),
 		config.Repository(contents),
 	)
@@ -73,18 +76,31 @@ func provideConfigPlugin(client *scm.Client, contents core.FileService, conf spe
 // provideConvertPlugin is a Wire provider function that returns
 // a yaml conversion plugin based on the environment
 // configuration.
-func provideConvertPlugin(client *scm.Client, conf spec.Config) core.ConvertService {
+func provideConvertPlugin(client *scm.Client, fileService core.FileService, conf spec.Config, templateStore core.TemplateStore) core.ConvertService {
 	return converter.Combine(
 		converter.Legacy(false),
-		converter.Starlark(false),
+		converter.Starlark(
+			conf.Starlark.Enabled,
+			conf.Starlark.StepLimit,
+		),
 		converter.Jsonnet(
 			conf.Jsonnet.Enabled,
+			conf.Jsonnet.ImportLimit,
+			fileService,
 		),
-		converter.Remote(
-			conf.Convert.Endpoint,
-			conf.Convert.Secret,
-			conf.Convert.Extension,
-			conf.Convert.SkipVerify,
+		converter.Template(
+			templateStore,
+			conf.Starlark.StepLimit,
+		),
+		converter.Memoize(
+			converter.Remote(
+				conf.Convert.Endpoint,
+				conf.Convert.Secret,
+				conf.Convert.Extension,
+				conf.Convert.SkipVerify,
+				conf.Convert.Timeout,
+			),
+			conf.Convert.CacheSize,
 		),
 	)
 }
@@ -129,6 +145,13 @@ func provideValidatePlugin(conf spec.Config) core.ValidateService {
 			conf.Validate.Endpoint,
 			conf.Validate.Secret,
 			conf.Validate.SkipVerify,
+			conf.Validate.Timeout,
+		),
+		// THIS FEATURE IS INTERNAL USE ONLY AND SHOULD
+		// NOT BE USED OR RELIED UPON IN PRODUCTION.
+		validator.Filter(
+			nil,
+			conf.Repository.Ignore,
 		),
 	)
 }

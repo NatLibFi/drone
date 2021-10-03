@@ -20,14 +20,19 @@ import (
 	"time"
 
 	"github.com/drone/drone/core"
+	"github.com/drone/drone/service/redisdb"
+
+	"github.com/drone/drone-go/drone"
 )
 
 type queue struct {
 	sync.Mutex
+	globMx redisdb.LockErr
 
 	ready    chan struct{}
 	paused   bool
 	interval time.Duration
+	throttle int
 	store    core.StageStore
 	workers  map[*worker]struct{}
 	ctx      context.Context
@@ -37,6 +42,7 @@ type queue struct {
 func newQueue(store core.StageStore) *queue {
 	q := &queue{
 		store:    store,
+		globMx:   redisdb.LockErrNoOp{},
 		ready:    make(chan struct{}, 1),
 		workers:  map[*worker]struct{}{},
 		interval: time.Minute,
@@ -112,6 +118,11 @@ func (q *queue) Request(ctx context.Context, params core.Filter) (*core.Stage, e
 }
 
 func (q *queue) signal(ctx context.Context) error {
+	if err := q.globMx.LockContext(ctx); err != nil {
+		return err
+	}
+	defer q.globMx.UnlockContext(ctx)
+
 	q.Lock()
 	count := len(q.workers)
 	pause := q.paused
@@ -141,6 +152,13 @@ func (q *queue) signal(ctx context.Context) error {
 		// need to make sure those limits are not exceeded
 		// before proceeding.
 		if withinLimits(item, items) == false {
+			continue
+		}
+
+		// if the system defines concurrency limits
+		// per repository we need to make sure those limits
+		// are not exceeded before proceeding.
+		if shouldThrottle(item, items, item.LimitRepo) == true {
 			continue
 		}
 
@@ -256,11 +274,44 @@ func withinLimits(stage *core.Stage, siblings []*core.Stage) bool {
 		if sibling.Name != stage.Name {
 			continue
 		}
-		if sibling.ID < stage.ID {
+		if sibling.ID < stage.ID ||
+			sibling.Status == core.StatusRunning {
 			count++
 		}
 	}
 	return count < stage.Limit
+}
+
+func shouldThrottle(stage *core.Stage, siblings []*core.Stage, limit int) bool {
+	// if no throttle limit is defined (default) then
+	// return false to indicate no throttling is needed.
+	if limit == 0 {
+		return false
+	}
+	// if the repository is running it is too late
+	// to skip and we can exit
+	if stage.Status == drone.StatusRunning {
+		return false
+	}
+
+	count := 0
+	// loop through running stages to count number of
+	// running stages for the parent repository.
+	for _, sibling := range siblings {
+		// ignore stages from other repository.
+		if sibling.RepoID != stage.RepoID {
+			continue
+		}
+		// ignore this stage and stages that were
+		// scheduled after this stage.
+		if sibling.ID >= stage.ID {
+			continue
+		}
+		count++
+	}
+	// if the count of running stages exceeds the
+	// throttle limit return true.
+	return count >= limit
 }
 
 // matchResource is a helper function that returns

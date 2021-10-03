@@ -59,15 +59,15 @@ type (
 		Docker       Docker
 		HTTP         HTTP
 		Jsonnet      Jsonnet
+		Starlark     Starlark
 		Logging      Logging
 		Prometheus   Prometheus
 		Proxy        Proxy
+		Redis        Redis
 		Registration Registration
 		Registries   Registries
 		Repository   Repository
 		Runner       Runner
-		Nomad        Nomad
-		Kube         Kubernetes
 		RPC          RPC
 		S3           S3
 		Secrets      Secrets
@@ -98,7 +98,7 @@ type (
 	}
 
 	Cleanup struct {
-		Disabled  bool         `envconfig:"DRONE_CLEANUP_DISABLED"`
+		Disabled bool          `envconfig:"DRONE_CLEANUP_DISABLED"`
 		Interval time.Duration `envconfig:"DRONE_CLEANUP_INTERVAL"         default:"24h"`
 		Running  time.Duration `envconfig:"DRONE_CLEANUP_DEADLINE_RUNNING" default:"24h"`
 		Pending  time.Duration `envconfig:"DRONE_CLEANUP_DEADLINE_PENDING" default:"24h"`
@@ -112,12 +112,17 @@ type (
 
 	// Database provides the database configuration.
 	Database struct {
-		Driver     string `envconfig:"DRONE_DATABASE_DRIVER"     default:"sqlite3"`
-		Datasource string `envconfig:"DRONE_DATABASE_DATASOURCE" default:"core.sqlite"`
-		Secret     string `envconfig:"DRONE_DATABASE_SECRET"`
+		Driver         string `envconfig:"DRONE_DATABASE_DRIVER"          default:"sqlite3"`
+		Datasource     string `envconfig:"DRONE_DATABASE_DATASOURCE"      default:"core.sqlite"`
+		Secret         string `envconfig:"DRONE_DATABASE_SECRET"`
+		MaxConnections int    `envconfig:"DRONE_DATABASE_MAX_CONNECTIONS" default:"0"`
 
 		// Feature flag
 		LegacyBatch bool `envconfig:"DRONE_DATABASE_LEGACY_BATCH"`
+
+		// Feature flag
+		EncryptUserTable    bool `envconfig:"DRONE_DATABASE_ENCRYPT_USER_TABLE"`
+		EncryptMixedContent bool `envconfig:"DRONE_DATABASE_ENCRYPT_MIXED_MODE"`
 	}
 
 	// Docker provides docker configuration
@@ -134,33 +139,14 @@ type (
 
 	// Jsonnet configures the jsonnet plugin
 	Jsonnet struct {
-		Enabled bool `envconfig:"DRONE_JSONNET_ENABLED"`
+		Enabled     bool `envconfig:"DRONE_JSONNET_ENABLED"`
+		ImportLimit int  `envconfig:"DRONE_JSONNET_IMPORT_LIMIT" default:"0"`
 	}
 
-	// Kubernetes provides kubernetes configuration
-	Kubernetes struct {
-		Enabled            bool   `envconfig:"DRONE_KUBERNETES_ENABLED"`
-		Namespace          string `envconfig:"DRONE_KUBERNETES_NAMESPACE"`
-		Path               string `envconfig:"DRONE_KUBERNETES_CONFIG_PATH"`
-		URL                string `envconfig:"DRONE_KUBERNETES_CONFIG_URL"`
-		TTL                int    `envconfig:"DRONE_KUBERNETES_TTL_AFTER_FINISHED" default:"300"`
-		ServiceAccountName string `envconfig:"DRONE_KUBERNETES_SERVICE_ACCOUNT"`
-		PullPolicy         string `envconfig:"DRONE_KUBERNETES_IMAGE_PULL" default:"Always"`
-		Image              string `envconfig:"DRONE_KUBERNETES_IMAGE"`
-	}
-
-	// Nomad configuration.
-	Nomad struct {
-		Enabled     bool              `envconfig:"DRONE_NOMAD_ENABLED"`
-		Datacenters []string          `envconfig:"DRONE_NOMAD_DATACENTER" default:"dc1"`
-		Namespace   string            `envconfig:"DRONE_NOMAD_NAMESPACE"`
-		Region      string            `envconfig:"DRONE_NOMAD_REGION"`
-		Prefix      string            `envconfig:"DRONE_NOMAD_JOB_PREFIX" default:"drone-job-"`
-		Image       string            `envconfig:"DRONE_NOMAD_IMAGE"`
-		ImagePull   bool              `envconfig:"DRONE_NOMAD_IMAGE_PULL"`
-		Memory      int               `envconfig:"DRONE_NOMAD_DEFAULT_RAM" default:"1024"`
-		Labels      map[string]string `envconfig:"DRONE_NOMAD_LABELS"`
-		CPU         int               `envconfig:"DRONE_NOMAD_DEFAULT_CPU" default:"500"`
+	// Starlark configures the starlark plugin
+	Starlark struct {
+		Enabled   bool   `envconfig:"DRONE_STARLARK_ENABLED"`
+		StepLimit uint64 `envconfig:"DRONE_STARLARK_STEP_LIMIT"`
 	}
 
 	// License provides license configuration
@@ -183,11 +169,23 @@ type (
 		EnableAnonymousAccess bool `envconfig:"DRONE_PROMETHEUS_ANONYMOUS_ACCESS" default:"false"`
 	}
 
+	// Redis provides the redis configuration.
+	Redis struct {
+		ConnectionString string `envconfig:"DRONE_REDIS_CONNECTION"`
+		Addr             string `envconfig:"DRONE_REDIS_ADDR"`
+		Password         string `envconfig:"DRONE_REDIS_PASSWORD"`
+		DB               int    `envconfig:"DRONE_REDIS_DB"`
+	}
+
 	// Repository provides the repository configuration.
 	Repository struct {
 		Filter     []string `envconfig:"DRONE_REPOSITORY_FILTER"`
 		Visibility string   `envconfig:"DRONE_REPOSITORY_VISIBILITY"`
 		Trusted    bool     `envconfig:"DRONE_REPOSITORY_TRUSTED"`
+
+		// THIS SETTING IS INTERNAL USE ONLY AND SHOULD
+		// NOT BE USED OR RELIED UPON IN PRODUCTION.
+		Ignore []string `envconfig:"DRONE_REPOSITORY_IGNORE"`
 	}
 
 	// Registries provides the registry configuration.
@@ -279,10 +277,9 @@ type (
 
 	// Session provides the session configuration.
 	Session struct {
-		Timeout     time.Duration `envconfig:"DRONE_COOKIE_TIMEOUT" default:"720h"`
-		Secret      string        `envconfig:"DRONE_COOKIE_SECRET"`
-		Secure      bool          `envconfig:"DRONE_COOKIE_SECURE"`
-		MappingFile string        `envconfig:"DRONE_LEGACY_TOKEN_MAPPING_FILE"`
+		Timeout time.Duration `envconfig:"DRONE_COOKIE_TIMEOUT" default:"720h"`
+		Secret  string        `envconfig:"DRONE_COOKIE_SECRET"`
+		Secure  bool          `envconfig:"DRONE_COOKIE_SECURE"`
 	}
 
 	// Status provides status configurations.
@@ -308,24 +305,28 @@ type (
 
 	// Yaml provides the yaml webhook configuration.
 	Yaml struct {
-		Endpoint   string `envconfig:"DRONE_YAML_ENDPOINT"`
-		Secret     string `envconfig:"DRONE_YAML_SECRET"`
-		SkipVerify bool   `envconfig:"DRONE_YAML_SKIP_VERIFY"`
+		Endpoint   string        `envconfig:"DRONE_YAML_ENDPOINT"`
+		Secret     string        `envconfig:"DRONE_YAML_SECRET"`
+		SkipVerify bool          `envconfig:"DRONE_YAML_SKIP_VERIFY"`
+		Timeout    time.Duration `envconfig:"DRONE_YAML_TIMEOUT" default:"1m"`
 	}
 
 	// Convert provides the converter webhook configuration.
 	Convert struct {
-		Extension  string `envconfig:"DRONE_CONVERT_PLUGIN_EXTENSION"`
-		Endpoint   string `envconfig:"DRONE_CONVERT_PLUGIN_ENDPOINT"`
-		Secret     string `envconfig:"DRONE_CONVERT_PLUGIN_SECRET"`
-		SkipVerify bool   `envconfig:"DRONE_CONVERT_PLUGIN_SKIP_VERIFY"`
+		Extension  string        `envconfig:"DRONE_CONVERT_PLUGIN_EXTENSION"`
+		Endpoint   string        `envconfig:"DRONE_CONVERT_PLUGIN_ENDPOINT"`
+		Secret     string        `envconfig:"DRONE_CONVERT_PLUGIN_SECRET"`
+		SkipVerify bool          `envconfig:"DRONE_CONVERT_PLUGIN_SKIP_VERIFY"`
+		CacheSize  int           `envconfig:"DRONE_CONVERT_PLUGIN_CACHE_SIZE" default:"10"`
+		Timeout    time.Duration `envconfig:"DRONE_CONVERT_TIMEOUT" default:"1m"`
 	}
 
 	// Validate provides the validation webhook configuration.
 	Validate struct {
-		Endpoint   string `envconfig:"DRONE_VALIDATE_PLUGIN_ENDPOINT"`
-		Secret     string `envconfig:"DRONE_VALIDATE_PLUGIN_SECRET"`
-		SkipVerify bool   `envconfig:"DRONE_VALIDATE_PLUGIN_SKIP_VERIFY"`
+		Endpoint   string        `envconfig:"DRONE_VALIDATE_PLUGIN_ENDPOINT"`
+		Secret     string        `envconfig:"DRONE_VALIDATE_PLUGIN_SECRET"`
+		SkipVerify bool          `envconfig:"DRONE_VALIDATE_PLUGIN_SKIP_VERIFY"`
+		Timeout    time.Duration `envconfig:"DRONE_VALIDATE_TIMEOUT" default:"1m"`
 	}
 
 	//
@@ -487,17 +488,28 @@ func (c *Config) IsStash() bool {
 	return c.Stash.Server != ""
 }
 
+func cleanHostname(hostname string) string {
+	hostname = strings.ToLower(hostname)
+	hostname = strings.TrimPrefix(hostname, "http://")
+	hostname = strings.TrimPrefix(hostname, "https://")
+
+	return hostname
+}
+
 func defaultAddress(c *Config) {
 	if c.Server.Key != "" || c.Server.Cert != "" || c.Server.Acme {
 		c.Server.Port = ":443"
 		c.Server.Proto = "https"
 	}
+	c.Server.Host = cleanHostname(c.Server.Host)
 	c.Server.Addr = c.Server.Proto + "://" + c.Server.Host
 }
 
 func defaultProxy(c *Config) {
 	if c.Proxy.Host == "" {
 		c.Proxy.Host = c.Server.Host
+	} else {
+		c.Proxy.Host = cleanHostname(c.Proxy.Host)
 	}
 	if c.Proxy.Proto == "" {
 		c.Proxy.Proto = c.Server.Proto

@@ -23,6 +23,7 @@ import (
 	"github.com/drone/drone/handler/api/auth"
 	"github.com/drone/drone/handler/api/badge"
 	globalbuilds "github.com/drone/drone/handler/api/builds"
+	"github.com/drone/drone/handler/api/card"
 	"github.com/drone/drone/handler/api/ccmenu"
 	"github.com/drone/drone/handler/api/events"
 	"github.com/drone/drone/handler/api/queue"
@@ -40,6 +41,7 @@ import (
 	"github.com/drone/drone/handler/api/repos/sign"
 	globalsecrets "github.com/drone/drone/handler/api/secrets"
 	"github.com/drone/drone/handler/api/system"
+	"github.com/drone/drone/handler/api/template"
 	"github.com/drone/drone/handler/api/user"
 	"github.com/drone/drone/handler/api/user/remote"
 	"github.com/drone/drone/handler/api/users"
@@ -62,6 +64,7 @@ var corsOpts = cors.Options{
 func New(
 	builds core.BuildStore,
 	commits core.CommitService,
+	card core.CardStore,
 	cron core.CronStore,
 	events core.Pubsub,
 	globals core.GlobalSecretStore,
@@ -82,6 +85,7 @@ func New(
 	stream core.LogStream,
 	syncer core.Syncer,
 	system *core.System,
+	template core.TemplateStore,
 	transferer core.Transferer,
 	triggerer core.Triggerer,
 	users core.UserStore,
@@ -90,6 +94,7 @@ func New(
 ) Server {
 	return Server{
 		Builds:     builds,
+		Card:       card,
 		Cron:       cron,
 		Commits:    commits,
 		Events:     events,
@@ -111,6 +116,7 @@ func New(
 		Stream:     stream,
 		Syncer:     syncer,
 		System:     system,
+		Template:   template,
 		Transferer: transferer,
 		Triggerer:  triggerer,
 		Users:      users,
@@ -122,6 +128,7 @@ func New(
 // Server is a http.Handler which exposes drone functionality over HTTP.
 type Server struct {
 	Builds     core.BuildStore
+	Card       core.CardStore
 	Cron       core.CronStore
 	Commits    core.CommitService
 	Events     core.Pubsub
@@ -143,6 +150,7 @@ type Server struct {
 	Stream     core.LogStream
 	Syncer     core.Syncer
 	System     *core.System
+	Template   core.TemplateStore
 	Transferer core.Transferer
 	Triggerer  core.Triggerer
 	Users      core.UserStore
@@ -224,7 +232,7 @@ func (s Server) Handler() http.Handler {
 				).Post("/{number}/promote", builds.HandlePromote(s.Repos, s.Builds, s.Triggerer))
 
 				r.With(
-					acl.CheckAdminAccess(),
+					acl.CheckWriteAccess(),
 				).Post("/{number}/rollback", builds.HandleRollback(s.Repos, s.Builds, s.Triggerer))
 
 				r.With(
@@ -280,6 +288,18 @@ func (s Server) Handler() http.Handler {
 				r.With(
 					acl.CheckAdminAccess(),
 				).Delete("/{member}", collabs.HandleDelete(s.Users, s.Repos, s.Perms))
+			})
+
+			r.Route("/cards", func(r chi.Router) {
+				r.Get("/{build}", card.HandleFindAll(s.Builds, s.Card, s.Repos))
+				r.Get("/{build}/{stage}/{step}", card.HandleFind(s.Builds, s.Card, s.Stages, s.Steps, s.Repos))
+				r.Get("/{build}/{stage}/{step}/json", card.HandleFindData(s.Builds, s.Card, s.Stages, s.Steps, s.Repos))
+				r.With(
+					acl.CheckAdminAccess(),
+				).Post("/{build}/{stage}/{step}", card.HandleCreate(s.Builds, s.Card, s.Stages, s.Steps, s.Repos))
+				r.With(
+					acl.CheckAdminAccess(),
+				).Delete("/{build}/{stage}/{step}", card.HandleDelete(s.Builds, s.Card, s.Stages, s.Steps, s.Repos))
 			})
 		})
 	})
@@ -341,6 +361,7 @@ func (s Server) Handler() http.Handler {
 	r.Route("/builds", func(r chi.Router) {
 		r.Use(acl.AuthorizeAdmin)
 		r.Get("/incomplete", globalbuilds.HandleIncomplete(s.Repos))
+		r.Get("/incomplete/v2", globalbuilds.HandleRunningStatus(s.Repos))
 	})
 
 	r.Route("/secrets", func(r chi.Router) {
@@ -351,6 +372,16 @@ func (s Server) Handler() http.Handler {
 		r.With(acl.CheckMembership(s.Orgs, true)).Post("/{namespace}/{name}", globalsecrets.HandleUpdate(s.Globals))
 		r.With(acl.CheckMembership(s.Orgs, true)).Patch("/{namespace}/{name}", globalsecrets.HandleUpdate(s.Globals))
 		r.With(acl.CheckMembership(s.Orgs, true)).Delete("/{namespace}/{name}", globalsecrets.HandleDelete(s.Globals))
+	})
+
+	r.Route("/templates", func(r chi.Router) {
+		r.With(acl.CheckMembership(s.Orgs, false)).Get("/", template.HandleListAll(s.Template))
+		r.With(acl.CheckMembership(s.Orgs, true)).Post("/{namespace}", template.HandleCreate(s.Template))
+		r.With(acl.CheckMembership(s.Orgs, false)).Get("/{namespace}", template.HandleList(s.Template))
+		r.With(acl.CheckMembership(s.Orgs, false)).Get("/{namespace}/{name}", template.HandleFind(s.Template))
+		r.With(acl.CheckMembership(s.Orgs, true)).Put("/{namespace}/{name}", template.HandleUpdate(s.Template))
+		r.With(acl.CheckMembership(s.Orgs, true)).Patch("/{namespace}/{name}", template.HandleUpdate(s.Template))
+		r.With(acl.CheckMembership(s.Orgs, true)).Delete("/{namespace}/{name}", template.HandleDelete(s.Template))
 	})
 
 	r.Route("/system", func(r chi.Router) {

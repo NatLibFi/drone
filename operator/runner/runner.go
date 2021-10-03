@@ -222,6 +222,7 @@ func (r *Runner) Run(ctx context.Context, id int64) error {
 		}
 		if v.Name == m.Stage.Name {
 			pipeline = v
+			break
 		}
 	}
 	if pipeline == nil {
@@ -539,7 +540,7 @@ func (r *Runner) start(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return nil
 		default:
 			// This error is ignored on purpose. The system
 			// should not exit the runner on error. The run
